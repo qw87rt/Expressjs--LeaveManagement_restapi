@@ -54,6 +54,7 @@ This repository contains the REST API for the Streamlined Leave Management Syste
 
 - The Streamlined Leave Management System requires optimization for better performance and scalability.
 
+
 ## Contributing
 
 Contributions are welcome! If you have any suggestions, bug reports, or feature requests, please open an issue or submit a pull request.
