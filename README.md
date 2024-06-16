@@ -5,9 +5,9 @@ This repository contains the REST API for the Streamlined Leave Management Syste
   > **Note:** `.env` is not included in the repository.
 
 
-[Mobile App - Repo](https://github.com/qw87rt/ReactNative--LeaveManagement) 
+[Click here to access the Mobile App Repository.](https://github.com/qw87rt/ReactNative--LeaveManagement)  
 
-[Desktop App - Repo](https://github.com/qw87rt/VB.NET--LeaveManagementPC/blob/main/README.md)
+[or click here to access Desktop App repo.](https://github.com/qw87rt/VB.NET--LeaveManagementPC/blob/main/README.md)
 
 ## Table of Contents
 
