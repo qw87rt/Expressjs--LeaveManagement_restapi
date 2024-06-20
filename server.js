@@ -5,7 +5,6 @@ const cors = require('cors');
 const clientside = require('./routes/clientside');
 const adminside = require('./routes/adminside');
 
-
 const app = express();
 app.use(
     cors({
@@ -15,14 +14,10 @@ app.use(
     })
   );
 
-
-
 app.use(express.json());
-
 
 app.use('/clientside', clientside);
 app.use('/adminside', adminside);
-
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
