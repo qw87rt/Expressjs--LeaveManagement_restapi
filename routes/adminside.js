@@ -55,7 +55,6 @@ router.delete('/logout', (req, res) => {
 });
 
 function logUserActivity(logData) {
-  // Prepare the SQL query to insert the log into the userlogs table
   const query = 'INSERT INTO userlogs (logData, created_at) VALUES (?, NOW())';
   const values = [logData, null];
 
@@ -166,7 +165,6 @@ function decryptData(data, key) {
     return decrypted.toString().split(',');
 }
 
-//Leeeeave Requests
 
 router.get('/pendingrequest', authenticateToken, (req, res) => {
     const adminID = req.admin.id;
@@ -177,9 +175,7 @@ router.get('/pendingrequest', authenticateToken, (req, res) => {
             console.error('Error retrieving user access level: ', error);
             res.status(500).json({ error: 'Internal server error' });
         } else {
-            // If the user's access level is 5, perform the first query
             if (results[0].access_level === 1) {
-                // If the user's access level is not 5, perform the second query
                 db.query(`SELECT lr.userid, requestid, firstname, lastname, department, leaveid, reasonid, DATE_FORMAT(datefiled, '%m-%d-%Y') AS datefiled, middlename, salary, position, description, duration, inclusivedates, commutation, vacation, sickleave, deducted_vacation, deducted_sick, process_no, request_status, vacationCreds, sickCreds, datereceived, DATE_FORMAT(lb.updated_at, '%m-%d-%Y') AS updated_at FROM leaverequests lr join users u on lr.userid = u.userid join leavebalances lb on lr.userid = lb.userid WHERE process_no = 1 AND request_status = ? AND department = ? ORDER BY datefiled DESC LIMIT 300`, ['Pending', results[0].department], (error, results) => {
                     if (error) {
                         console.error('Error retrieving pending requests: ', error);
@@ -219,13 +215,11 @@ router.get('/pendingrequest', authenticateToken, (req, res) => {
 router.get('/approvedrequest', authenticateToken, (req, res) => {
     const adminID = req.admin.id;
 
-    // First, check the user's access level and department
     db.query('SELECT access_level, department FROM admins WHERE adminid = ?', [adminID], (error, results) => {
         if (error) {
             console.error('Error retrieving user access level: ', error);
             res.status(500).json({ error: 'Internal server error' });
         } else {
-            // If the user's access level is 5, perform the first query
             if (results[0].access_level === 2) {
                 db.query(`SELECT lr.userid, requestid, firstname, lastname, department, leaveid, reasonid, DATE_FORMAT(datefiled, '%m-%d-%Y') AS datefiled, middlename, salary, position, description, duration, inclusivedates, commutation, vacation, sickleave, deducted_vacation, deducted_sick, process_no, request_status, vacationCreds, sickCreds, datereceived, DATE_FORMAT(lb.updated_at, '%m-%d-%Y') AS updated_at FROM leaverequests lr join users u on lr.userid = u.userid join leavebalances lb on lr.userid = lb.userid WHERE request_status = ? ORDER BY datefiled DESC LIMIT 300`, ['Approved'], (error, results) => {
                     if (error) {
@@ -242,7 +236,6 @@ router.get('/approvedrequest', authenticateToken, (req, res) => {
                     }
                 });
             } else if (results[0].access_level === 1) {
-                // If the user's access level is not 5, perform the second query
                 db.query(`SELECT lr.userid, requestid, firstname, lastname, department, leaveid, reasonid, DATE_FORMAT(datefiled, '%m-%d-%Y') AS datefiled, middlename, salary, position, description, duration, inclusivedates, commutation, vacation, sickleave, deducted_vacation, deducted_sick, process_no, request_status, vacationCreds, sickCreds, datereceived, DATE_FORMAT(lb.updated_at, '%m-%d-%Y') AS updated_at FROM leaverequests lr join users u on lr.userid = u.userid join leavebalances lb on lr.userid = lb.userid WHERE request_status = ? AND department = ? ORDER BY datefiled DESC LIMIT 300`, ['Approved', results[0].department], (error, results) => {
                     if (error) {
                         console.error('Error retrieving pending requests: ', error);
@@ -266,21 +259,17 @@ router.get('/approvedrequest', authenticateToken, (req, res) => {
 router.get('/deniedrequest', authenticateToken, (req, res) => {
     const adminID = req.admin.id;
 
-    // First, check the user's access level and department
     db.query('SELECT access_level, department FROM admins WHERE adminid = ?', [adminID], (error, results) => {
         if (error) {
             console.error('Error retrieving user access level: ', error);
             res.status(500).json({ error: 'Internal server error' });
         } else {
-            // If the user's access level is 5, perform the first query
            if (results[0].access_level === 1) {
-                // If the user's access level is not 5, perform the second query
                 db.query(`SELECT lr.userid, requestid, firstname, lastname, department, leaveid, reasonid, DATE_FORMAT(datefiled, '%m-%d-%Y') AS datefiled, middlename, salary, position, description, duration, inclusivedates, commutation, vacation, sickleave, deducted_vacation, deducted_sick, process_no, request_status, vacationCreds, sickCreds, datereceived, DATE_FORMAT(lb.updated_at, '%m-%d-%Y') AS updated_at FROM leaverequests lr join users u on lr.userid = u.userid join leavebalances lb on lr.userid = lb.userid WHERE request_status = ? AND department = ? ORDER BY datefiled DESC`, ['Denied', results[0].department], (error, results) => {
                     if (error) {
                         console.error('Error retrieving pending requests: ', error);
                         res.status(500).json({ error: 'Internal server error' });
                     } else {
-                         // Decrypt each field of each user
                          results.forEach(user => {
                             user.lastname = decryptData(user.lastname, key);
                             user.firstname = decryptData(user.firstname, key);
@@ -317,7 +306,6 @@ router.post('/reqdeptfilter', authenticateToken, (req, res) => {
     const {department, reqStatus} = req.body
     const adminID = req.admin.id;
  
-    // First, check the user's access level and department
     db.query('SELECT access_level, department FROM admins WHERE adminid = ?', [adminID], (error, results) => {
         if (error) {
             console.error('Error retrieving user access level: ', error);
@@ -373,38 +361,23 @@ router.put('/update_req', authenticateToken, (req, res) => {
     let updateRequestQueries = [];
     let requestQueryParams = [];
 
-    if (leaveid !== undefined) {
-        updateRequestQueries.push('leaveid = ?');
-        requestQueryParams.push(leaveid);
+   const fieldsToInclude = {
+    leaveid: true,
+    reasonid: true,
+    description: true,
+    inclusivedates: true,
+    commutation: true,
+    duration: true,
+    request_status: true,
+    datefiled: true
+};
+
+for (let field in fieldsToInclude) {
+    if (fieldsToInclude[field]) {
+        updateRequestQueries.push(`${field} =?`);
+        requestQueryParams.push(eval(field));
     }
-    if (reasonid !== undefined) {
-        updateRequestQueries.push('reasonid = ?');
-        requestQueryParams.push(reasonid);
-    }
-    if (description !== undefined) {
-        updateRequestQueries.push('description = ?');
-        requestQueryParams.push(description);
-    }
-    if (inclusivedates !== undefined) {
-        updateRequestQueries.push('inclusivedates = ?');
-        requestQueryParams.push(inclusivedates);
-    }
-    if (commutation !== undefined) {
-        updateRequestQueries.push('commutation = ?');
-        requestQueryParams.push(commutation);
-    }
-    if (duration !== undefined) {
-        updateRequestQueries.push('duration = ?');
-        requestQueryParams.push(duration);
-    }
-    if (request_status !== undefined) {
-        updateRequestQueries.push('request_status = ?');
-        requestQueryParams.push(request_status);
-    }
-    if (datefiled !== undefined) {
-        updateRequestQueries.push('datefiled = ?');
-        requestQueryParams.push(datefiled);
-    }
+}
 
 
     requestQueryParams.push(requestid);
@@ -539,15 +512,12 @@ router.post('/reqfilter', authenticateToken, (req, res) => {
 router.get('/getUsers', authenticateToken, (req, res) => {
     const adminID = req.admin.id;
 
-    // First, check the user's access level and department
     db.query('SELECT access_level, department FROM admins WHERE adminid = ?', [adminID], (error, results) => {
         if (error) {
             console.error('Error retrieving user access level: ', error);
             res.status(500).json({ error: 'Internal server error' });
         } else {
-            // If the user's access level is 5, perform the first query
             if (results[0].access_level === 1) {
-                // If the user's access level is not 5, perform the second query
                 db.query('SELECT u.userid, u.password, u.lastname, u.firstname, u.middlename, u.department, u.position, u.salary, u.contactnumber, lb.vacation, lb.sickleave, lb.special_privilege_leave, lb.forcedleave, lb.solo_parent_leave FROM users u JOIN leavebalances lb ON u.userid = lb.userid WHERE u.department = ? LIMIT 0, 300', [results[0].department], (error, results) => {
                     if (error) {
                         console.error('Error retrieving users: ', error);
@@ -614,7 +584,6 @@ router.post('/filteruser', authenticateToken, (req, res) => {
                     }
                 });
               } else if (results[0].access_level === 2) {
-                  // If the user's access level is not 5, perform the second query
                   db.query('SELECT u.userid, u.password, u.lastname, u.firstname, u.middlename, u.department, u.position, u.salary, u.contactnumber, lb.vacation, lb.sickleave, lb.special_privilege_leave, lb.forcedleave, lb.solo_parent_leave FROM users u join leavebalances lb on u.userid = lb.userid where department = ?', [department], (error, results) => {
                     if (error) {
                         console.error('Error retrieving users: ', error);
@@ -820,13 +789,11 @@ function handleUpdateResponse(res) {
     };
 }
 
-  //users ---------------end---------
 
   //Register-------------------------------
   router.post('/registeruser', (req, res) => {
     const { password, lastname, firstname, middlename, department, position, salary, contactnumber, vacation, sickleave, forcedleave, special_privilege_leave, solo_parent_leave } = req.body;
  
-    // Please ensure proper data validation before inserting into database
     if (!lastname || !password) {
         return res.status(400).json({ error: 'Required fields' });
     }
@@ -876,7 +843,6 @@ function handleUpdateResponse(res) {
    
     const { password, lastname, firstname, middlename, contactnumber, department, access_level } = req.body;
  
-    // Please ensure proper data validation before inserting into database
     if (!lastname || !password) {
         return res.status(400).json({ error: 'Required fields' });
     }
@@ -983,163 +949,6 @@ router.get('/getCredits', (req, res) => {
     });
   });
   
-  
-  router.post('/leavecard_req', (req, res) => {
-    const rows = req.body; // This should be an array of objects
-    let errors = [];
-    
-    rows.forEach((row) => {
-      const { userid, rownum, period, particulars, actiontaken, vacleave_earned, sickleave_earned, vactardy, sicktardy, VL, FL, vacWOP, sickWOP, Vacbal, Sickbal, SPL, SOL, MAL, PAL, MCW, RPL, SEL, note  } = row;
-   
-      // Build the SET part of the query
-      let setClause = '';
-      let values = [];
-      if (period !== undefined) {
-        setClause += 'period = ?, ';
-        values.push(period);
-      }
-      if (particulars !== undefined) {
-        setClause += 'particulars = ?, ';
-        values.push(particulars);
-      }
-       if (actiontaken !== undefined) {
-        setClause += 'actiontaken = ?, ';
-        values.push(actiontaken);
-      }
-   
-       if (vacleave_earned !== undefined) {
-        setClause += 'vacleave_earned = ?, ';
-        values.push(vacleave_earned);
-      }
-      
-        if (sickleave_earned !== undefined) {
-        setClause += 'sickleave_earned = ?, ';
-        values.push(sickleave_earned);
-      }
-   
-       if (vactardy !== undefined) {
-        setClause += 'vactardy = ?, ';
-        values.push(vactardy);
-      }
-      
-        if (sicktardy !== undefined) {
-        setClause += 'sicktardy = ?, ';
-        values.push(sicktardy);
-      }
-   
-       if (VL !== undefined) {
-        setClause += 'VL = ?, ';
-        values.push(VL);
-      }
-      
-       if (FL !== undefined) {
-        setClause += 'FL = ?, ';
-        values.push(FL);
-      }
-   
-       if (vacWOP !== undefined) {
-        setClause += 'vacWOP = ?, ';
-        values.push(vacWOP);
-      }
-   
-   
-       if (sickWOP !== undefined) {
-        setClause += 'sickWOP = ?, ';
-        values.push(sickWOP);
-      }
-   
-   
-       if (Vacbal !== undefined) {
-        setClause += 'Vacbal = ?, ';
-        values.push(Vacbal);
-      }
-      
-   
-       if (Sickbal !== undefined) {
-        setClause += 'Sickbal = ?, ';
-        values.push(Sickbal);
-      }
-      
-      if (SPL !== undefined) {
-       setClause += 'SPL = ?, ';
-       values.push(SPL);
-     }
-
-     if (SOL !== undefined) {
-        setClause += 'SOL = ?, ';
-        values.push(SOL);
-      }
-      
-     if (MAL !== undefined) {
-        setClause += 'MAL = ?, ';
-        values.push(MAL);
-      }
-
-      if (PAL !== undefined) {
-        setClause += 'PAL = ?, ';
-        values.push(PAL);
-      }
-
-      if (MCW !== undefined) {
-        setClause += 'MCW = ?, ';
-        values.push(MCW);
-      }
-
-      if (RPL !== undefined) {
-        setClause += 'RPL = ?, ';
-        values.push(RPL);
-      }
-     
-      if (SEL !== undefined) {
-        setClause += 'SEL = ?, ';
-        values.push(SEL);
-      }
-      
-     if (note !== undefined) {
-        setClause += 'note = ?, ';
-        values.push(note);
-      }
-      // Remove trailing comma and space
-      setClause = setClause.slice(0, -2);
-   
-       // Try to find the record
-   db.query('SELECT * FROM leavecard WHERE userid = ? AND rownum = ?', [userid, rownum], (error, results) => {
-    if (error) {
-      console.error('Error retrieving user: ', error);
-      errors.push('Error retrieving user');
-    } else {
-      // If the record exists, update it
-      if (results.length > 0) {
-
-        // Log the insert action
-        const logData = `Attempting to update leavecard for userid: ${userid}, @row: ${rownum}.`;
-        logUserActivity(logData);
-
-        db.query(`UPDATE leavecard SET ${setClause} WHERE userid = ? AND rownum = ?`, [...values, userid, rownum], (error, results) => {
-          if (error) {
-            console.error('Error updating user: ', error);
-            errors.push('Error updating user');
-          }
-        });
-      } else {
-        // If the record doesn't exist, insert it
-        const logData = `Inserting new leavecard record for userid: ${userid}, @row: ${rownum}.`;
-        logUserActivity(logData);
-
-        db.query('INSERT IGNORE INTO leavecard (userid, rownum, period, particulars, actiontaken, vacleave_earned, sickleave_earned, vactardy, sicktardy, VL, FL, vacWOP, sickWOP, Vacbal, Sickbal, SPL, SOL, MAL, PAL, MCW, RPL, SEL, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [userid, rownum, period, particulars, actiontaken, vacleave_earned, sickleave_earned, vactardy, sicktardy, VL, FL, vacWOP, sickWOP, Vacbal, Sickbal, SPL, SOL, MAL, PAL, MCW, RPL, SEL, note], (error, results) => {
-          if (error) {
-            console.error('Error inserting user: ', error);
-            errors.push('Error inserting user');
-          }
-        });
-      }
-    }
-  });
-});
-
-// Send a single response after all operations have completed
-res.json({ message: errors.length > 0 ? 'Errors occurred: ' + errors.join(', ') : 'Rows processed successfully' });
-});
   
   
 //----------
