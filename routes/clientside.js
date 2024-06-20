@@ -42,7 +42,6 @@ function logUserActivity(logData) {
     const query = 'INSERT INTO userlogs (logData, created_at) VALUES (?, NOW())';
     const values = [logData, null];
   
-    // Execute the query
     db.query(query, values, (error, result) => {
       if (error) {
         console.error('Error logging user activity:', error);
@@ -68,13 +67,11 @@ router.delete('/logout', (req, res) => {
 router.get('/', authenticateToken, (req, res) => {
     const userID = req.user.id;
 
-    // Existing queries to get user details and notification count
     db.query('SELECT * FROM users WHERE userid =?', [userID], (error, userResults) => {
         if (error) {
             console.error('Error retrieving user details: ', error);
             res.status(500).json({ error: 'Internal server error' });
         } else {
-            // Query to count notifications for the user
             db.query('SELECT COUNT(*) as notificationCount FROM notifications WHERE userid =?', [userID], (error, notificationResults) => {
                 if (error) {
                     console.error('Error retrieving notification count: ', error);
@@ -146,7 +143,6 @@ router.post('/login', (req, res) => {
         const accessToken = generateAccessToken(user);
         const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET);
 
-       // Improved log message for user login activity using "Employee"
         const logData = `Employee with ID of ${userID} has successfully logged in.`;
 
         // Call to logUserActivity with the improved log message
@@ -230,7 +226,6 @@ router.post('/leaverequest', authenticateToken, (req, res) => {
     const userID = req.user.id;
     const { leaveid, reasonid, inclusivedates, duration, description, commutation } = req.body;
    
-    // Please ensure proper data validation before inserting into database
     if (!leaveid) {
         return res.status(400).json({ error: 'Required fields' });
     }
@@ -290,7 +285,6 @@ router.get('/history', authenticateToken, (req, res) => {
         }
     });
 });
-
 
 
 router.get('/notifications', authenticateToken, (req, res) => {
